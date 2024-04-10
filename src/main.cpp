@@ -30,31 +30,38 @@ void setup(void) {
 }
 
 void loop(void) {
+
+    blinker.readInputs();
+    blinker.blink();
+
     if (wifiState) {
         ArduinoOTA.handle();
     }
     // Check for incoming CAN message
     if (CAN.readMessage(&canMsg) == MCP2515::ERROR_OK) {
         // Handle different CAN message IDs
-        switch (canMsg.can_id) {
-            // RPM message ID
-            case 0x201:
-                // Extract RPM from the message and update tacho
-                rpm = canMsg.data[1] << 8 | canMsg.data[0];
-                if (rpm >= WIFI_RPM) {
-                    reached = true;
-                } else {
-                    updateTacho(rpm);
-                }
-                if (rpm < WIFI_RPM && reached) {
-                    reached = false;
-                    Serial.println("Toggle WIFI");
-                    wifiState = toggleWifi();
-                }
-                break;
-            default:
-                break;
-        }
+       switch (canMsg.can_id) {
+           // RPM message ID
+           case CAN_ID_RPM:
+               // Extract RPM from the message and update tacho
+               rpm = canMsg.data[1] << 8 | canMsg.data[0];
+               if (rpm >= WIFI_RPM) {
+                   reached = true;
+               } else {
+                   updateTacho(rpm);
+               }
+               if (rpm < WIFI_RPM && reached) {
+                   reached = false;
+                   wifiState = toggleWifi();
+               }
+               break;
+           case CAN_ID_REV:
+               // Extract rev limit from the message
+               blinker.setRevState((canMsg.data[4] & 0x1) != 0);
+               break;
+           default:
+               break;
+       }
     }
 }
 
@@ -89,7 +96,7 @@ double interpolate2d(long value, const long x[], const double y[], size_t size) 
 // Update tachometer based on RPM
 void updateTacho(long rpmIn) {
     // Calculate PWM value for the tachometer based on RPM and interpolation
-    int pwmValue = int(linterp(rpmIn, 0, MAX_RPM + 100, 0, MAX_PWM) * interpolate2d(rpm, rpms, multipliers, arraySize));
+    int pwmValue = int(linterp(rpmIn, 0, MAX_RPM + 100, 0, MAX_PWM) * interpolate2d(rpm, rpms, multiplierTacho, arraySizeRpm));
 
     // Limit PWM value within the range of steps
     if (pwmValue > MAX_PWM) {
@@ -123,15 +130,9 @@ bool toggleWifi() {
                 analogWrite(TACHO_OUTPUT_PIN, count);
             }
         }
-        Serial.println('\n');
-        Serial.println("Connection established!");
-        Serial.print("IP address:\t");
-        Serial.println(WiFi.localIP());
         ArduinoOTA.begin();
         return true;
     } else {
-        Serial.println('\n');
-        Serial.println("Turning off");
         WiFi.mode(WIFI_OFF);
         ArduinoOTA.end();
         return false;
