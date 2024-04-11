@@ -14,6 +14,21 @@
 
 class Debouncer {
 
+public:
+    Debouncer();
+
+    void interval(uint16_t interval_millis);
+
+    bool update();
+
+    bool read();
+
+    bool changed() { return getStateFlag(CHANGED_STATE); }
+
+    void attach(int pin);
+
+    void attach(int pin, int mode);
+
 private:
     uint16_t interval_millis;
     uint8_t state;
@@ -38,21 +53,6 @@ private:
     virtual bool readCurrentState() { return GPIO_READ(pin); }
 
     virtual void setPinMode(int pin, int mode) { pinMode(pin, mode); }
-
-public:
-    Debouncer();
-
-    void interval(uint16_t interval_millis);
-
-    bool update();
-
-    bool read();
-
-    bool changed() { return getStateFlag(CHANGED_STATE); }
-
-    void attach(int pin, int mode);
-
-    void attach(int pin);
 };
 
 #endif //INC_911_CAN_TACHO_DEBOUNCER_H

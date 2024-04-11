@@ -9,9 +9,9 @@
 #include <FastLED.h>
 #include <Debouncer.h>
 
+#define LED_PIN             D2
 #define LEFT_PIN            D3
 #define RIGHT_PIN           D4
-#define LED_PIN             D2
 #define NUM_LEDS            2
 
 #define BLINK_TIME_MS       150
@@ -45,7 +45,7 @@ private:
 
     void timer(timerStruct &timerData);
 
-    CRGB leds[NUM_LEDS];
+    CRGB leds[NUM_LEDS]{};
     stateBlinkerStruct blinkerStruct{};
     Debouncer debouncerLeft;
     Debouncer debouncerRight;
