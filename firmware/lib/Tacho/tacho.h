@@ -7,15 +7,24 @@
 
 #include "Arduino.h"
 #include "../interpolation/interpolation.h"
+#include "../../src/config.h"
 
 #define MAX_PWM             255
 
-// RPM limits
-#define MAX_RPM             7000
-#define MIN_RPM             1000
-#define WIFI_RPM            9000
-
-// RPM and corresponding multiplier values
+/**
+ * @brief setup the tacho correction multiplier
+ * 
+ *    multiplier
+ *  1.0   |                            x
+ *  0.9   |            x   x   x   x   
+ *  0.8   |        x   
+ *  0.7   |    
+ *  0.6   |    x   
+ *  0.5   |    
+ *       ------------------------------
+ *        0   1   2   3   4   5   6   7 RPM
+ *   
+ */
 const long rpms[] = {
         MIN_RPM,
         2000,
@@ -36,7 +45,7 @@ const double multiplierTacho[] = {
         1.0
 };
 
-const size_t arraySizeRpm = sizeof(rpms) / sizeof(rpms[0]);
+const uint8_t arraySizeTacho = sizeof(rpms) / sizeof(rpms[0]);
 
 class Tacho {
 public:
@@ -44,7 +53,7 @@ public:
 
     void attach(int pin);
 
-    void sweep() const;
+    bool sweep() const;
 
     void update(long rpmIn) const;
 

@@ -15,7 +15,7 @@
 
 // CAN IDS
 #define CAN_ID_RPM          0x201
-#define CAN_ID_REV          0x200
+#define CAN_ID_TEMP         0x203
 
 // Wifi setup
 #define SSID                "pvstsdkjdk"
@@ -28,7 +28,13 @@
 // CAN message structure
 struct can_frame canMsg;
 MCP2515 CAN(SPI_CS_PIN);
-Blinker blinker;
+
+struct CanData {
+    uint16_t rpm;
+    int temp;
+};
+
+CanData canData;
 Tacho tacho;
 
 #endif //INC_911_CAN_TACHO_MAIN_H

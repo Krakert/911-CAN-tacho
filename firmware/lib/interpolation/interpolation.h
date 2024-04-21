@@ -41,7 +41,8 @@ public:
      * @param size The size of the x and y arrays.
      * @return The interpolated y value corresponding to the given x value.
      */
-    static double interpolate2d(long value, const long x[], const double y[], size_t size) {
+    template<typename Tx, typename Ty>
+    static double interpolate2d(long value, const Tx x[], const Ty y[], uint8_t size) {
         // Check if RPM is below the lowest RPM in the table
         if (value <= x[0]) {
             return y[0];
@@ -53,7 +54,7 @@ public:
         }
 
         // Find the last index less than the searched value
-        size_t idx;
+        uint8_t idx;
         for (idx = 0; idx < size - 1; idx++) {
             if (x[idx + 1] > value) {
                 break;

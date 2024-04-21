@@ -22,21 +22,23 @@ void Tacho::attach(int pin) {
  * @brief A simple boot-up sequences for the needle.
  */
 /**************************************************************************/
-void Tacho::sweep() const {
+bool Tacho::sweep() const {
     int i;
     // Sweep from 0 to 255
     for (i = 0; i <= 255; i++) {
         writeRaw(i);
-        delay(5);
+        delay(3);
     }
 
-    delay(500);
+    delay(300);
 
     // Sweep back from 255 to 0
     for (i = 255; i >= 0; i--) {
         writeRaw(i);
-        delay(5);
+        delay(3);
     }
+    delay(300);
+    return true;
 }
 
 /**************************************************************************/
@@ -54,7 +56,7 @@ void Tacho::sweep() const {
 void Tacho::update(long rpmIn) const {
 
     auto pwmValue = uint16_t(Interpolation::interpolate(rpmIn, 0, MAX_RPM + 100, 0, MAX_PWM) *
-                             Interpolation::interpolate2d(rpmIn, rpms, multiplierTacho, arraySizeRpm));
+                             Interpolation::interpolate2d(rpmIn, rpms, multiplierTacho, arraySizeTacho));
 
     // Limit PWM value within the range of steps
     if (pwmValue > MAX_PWM) {

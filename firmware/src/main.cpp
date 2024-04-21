@@ -3,15 +3,20 @@
 // Function prototypes
 bool toggleWifi();
 
-long rpm = 0;
 bool wifiState = false;
 bool reached = false;
 
 unsigned long currentMillis = 0;
 unsigned long previousMillis = 0; // Variable to store the last time the loop ran
 const unsigned int delayInterval = 100; // Delay interval in milliseconds
+//Blinker blinker;
+
+#define NUM_LEDS 2
+CRGB leds[NUM_LEDS];
 
 void setup(void) {
+    CFastLED::addLeds<WS2812B, LED_PIN, GRB>(leds, 2);
+
     Serial.begin(115200);
     Serial.println("Booting");
     // Initialize CAN bus communication
@@ -19,13 +24,20 @@ void setup(void) {
     CAN.setBitrate(CAN_500KBPS, MCP_8MHZ);
     CAN.setNormalMode();
     tacho.attach(D1);
-    tacho.sweep();
+    leds[0] = CRGB::Green;
+    leds[1] = CRGB::Green;
+    FastLED.show();
+//    blinker.test();
+//    blinker.test(tacho.sweep());
 }
 
 void loop(void) {
 
     blinker.readInputs();
     blinker.blink();
+    blinker.setRevState(canData.temp, canData.rpm);
+    Serial.printf("RPM: %d, Temp: %d\n", canData.rpm, canData.temp);
+    tacho.update(canData.rpm);
 
     if (wifiState) {
         ArduinoOTA.handle();
@@ -37,20 +49,18 @@ void loop(void) {
             // RPM message ID
             case CAN_ID_RPM:
                 // Extract RPM from the message and update tacho
-                rpm = canMsg.data[1] << 8 | canMsg.data[0];
-                if (rpm >= WIFI_RPM) {
+                canData.rpm = canMsg.data[1] << 8 | canMsg.data[0];
+                if (canData.rpm >= WIFI_RPM) {
                     reached = true;
-                } else {
-                    tacho.update(rpm);
                 }
-                if (rpm < WIFI_RPM && reached) {
+                if (canData.rpm < WIFI_RPM && reached) {
                     reached = false;
                     wifiState = toggleWifi();
                 }
                 break;
-            case CAN_ID_REV:
-                // Extract rev limit from the message
-                blinker.setRevState((canMsg.data[4] & 0x1) != 0);
+            case CAN_ID_TEMP:
+                // Extract CLT from the message
+                canData.temp = canMsg.data[2] - 40;
                 break;
             default:
                 break;
